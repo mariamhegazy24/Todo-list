@@ -1,54 +1,64 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
-import { TodosContext } from '../context/TodosContext';
+import { useSelector, useDispatch } from 'react-redux';
+import { addTodo, toggleTodo, deleteTodo } from '../store/todosSlice';
 
 export default function HomeScreen({ navigation }) {
-    const { todos, addTodo, toggleTodo, deleteTodo } = useContext(TodosContext);
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [filter, setFilter] = useState('all');
+  const todos = useSelector((state) => state.todos);
+  const dispatch = useDispatch();
 
-    const onSubmit = () => {
-        if (!title.trim()) return;
-        const newItem = addTodo(title, description);
-        setTitle('');
-        setDescription('');
-        // optional: navigation.navigate('Details', { id: newItem.id });
-    };
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [filter, setFilter] = useState('all');
 
-    const filtered = todos.filter(t => (filter === 'active' ? !t.completed : filter === 'completed' ? t.completed : true));
+  const onSubmit = () => {
+    if (!title.trim()) return;
+    dispatch(addTodo(title, description));
+    setTitle('');
+    setDescription('');
+  };
 
-    const renderItem = ({ item }) => (
-        <View style={styles.todoItem}>
-            <TouchableOpacity style={styles.textContainer} onPress={() => navigation.navigate('Details', { id: item.id })}>
-                <Text style={[styles.title, item.completed && styles.completed]}>{item.title}</Text>
-                {item.description ? <Text style={styles.desc}>{item.description}</Text> : null}
-            </TouchableOpacity>
-            <View style={styles.actions}>
-                <TouchableOpacity onPress={() => toggleTodo(item.id)} style={styles.smallBtn}><Text style={styles.smallBtnText}>{item.completed ? 'Undo' : 'Done'}</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => deleteTodo(item.id)} style={[styles.smallBtn, styles.delBtn]}><Text style={styles.smallBtnText}>Del</Text></TouchableOpacity>
-            </View>
-        </View>
-    );
+  const filtered = todos.filter((t) =>
+    filter === 'active' ? !t.completed : filter === 'completed' ? t.completed : true
+  );
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.header}>TODO APP</Text>
+  const renderItem = ({ item }) => (
+    <View style={styles.todoItem}>
+      <TouchableOpacity style={styles.textContainer} onPress={() => navigation.navigate('Details', { id: item.id })}>
+        <Text style={[styles.title, item.completed && styles.completed]}>{item.title}</Text>
+        {item.description ? <Text style={styles.desc}>{item.description}</Text> : null}
+      </TouchableOpacity>
+      <View style={styles.actions}>
+        <TouchableOpacity onPress={() => dispatch(toggleTodo(item.id))} style={styles.smallBtn}>
+          <Text style={styles.smallBtnText}>{item.completed ? 'Undo' : 'Done'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => dispatch(deleteTodo(item.id))} style={[styles.smallBtn, styles.delBtn]}>
+          <Text style={styles.smallBtnText}>Del</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
-            <TextInput placeholder="Title (required)" placeholderTextColor="#666" style={styles.input} value={title} onChangeText={setTitle} />
-            <TextInput placeholder="Description (optional)" placeholderTextColor="#666" style={[styles.input, styles.descInput]} value={description} onChangeText={setDescription} multiline />
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>TODO APP</Text>
 
-            <TouchableOpacity style={styles.submit} onPress={onSubmit}><Text style={styles.submitText}>Submit</Text></TouchableOpacity>
+      <TextInput placeholder="Title (required)" placeholderTextColor="#666" style={styles.input} value={title} onChangeText={setTitle} />
+      <TextInput placeholder="Description (optional)" placeholderTextColor="#666" style={[styles.input, styles.descInput]} value={description} onChangeText={setDescription} multiline />
 
-            <View style={styles.filters}>
-                <TouchableOpacity onPress={() => setFilter('all')} style={[styles.tab, filter === 'all' && styles.tabActive]}><Text style={filter === 'all' ? styles.tabTextActive : styles.tabText}>All</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => setFilter('active')} style={[styles.tab, filter === 'active' && styles.tabActive]}><Text style={filter === 'active' ? styles.tabTextActive : styles.tabText}>Active</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => setFilter('completed')} style={[styles.tab, filter === 'completed' && styles.tabActive]}><Text style={filter === 'completed' ? styles.tabTextActive : styles.tabText}>Completed</Text></TouchableOpacity>
-            </View>
+      <TouchableOpacity style={styles.submit} onPress={onSubmit}>
+        <Text style={styles.submitText}>Submit</Text>
+      </TouchableOpacity>
 
-            <FlatList data={filtered} keyExtractor={i => i.id} renderItem={renderItem} contentContainerStyle={{ paddingTop: 10 }} ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>No todos</Text>} />
-        </View>
-    );
+      <View style={styles.filters}>
+        <TouchableOpacity onPress={() => setFilter('all')} style={[styles.tab, filter === 'all' && styles.tabActive]}><Text style={filter === 'all' ? styles.tabTextActive : styles.tabText}>All</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => setFilter('active')} style={[styles.tab, filter === 'active' && styles.tabActive]}><Text style={filter === 'active' ? styles.tabTextActive : styles.tabText}>Active</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => setFilter('completed')} style={[styles.tab, filter === 'completed' && styles.tabActive]}><Text style={filter === 'completed' ? styles.tabTextActive : styles.tabText}>Completed</Text></TouchableOpacity>
+      </View>
+
+      <FlatList data={filtered} keyExtractor={(i) => i.id} renderItem={renderItem} contentContainerStyle={{ paddingTop: 10 }} ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>No todos</Text>} />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
